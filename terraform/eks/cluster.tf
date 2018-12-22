@@ -12,3 +12,21 @@ resource "aws_eks_cluster" "this" {
     "aws_iam_role_policy_attachment.AmazonEKSServicePolicy",
   ]
 }
+
+output "cluster_dns" {
+  value = "${aws_eks_cluster.this.endpoint}"
+}
+
+output "cluster_ca" {
+  value = "${base64decode(aws_eks_cluster.this.certificate_authority.0.data)}"
+}
+
+data "external" "aws_iam_authenticator" {
+  depends_on = ["aws_eks_cluster.this"]
+
+  program = ["sh", "-c", "aws-iam-authenticator token -i ${var.name} | jq -r -c .status"]
+}
+
+output "cluster_token" {
+  value = "${data.external.aws_iam_authenticator.result["token"]}"
+}

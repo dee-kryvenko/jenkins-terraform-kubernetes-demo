@@ -48,6 +48,10 @@ resource "aws_iam_role" "node" {
 POLICY
 }
 
+output "node_role_arn" {
+  value = "${aws_iam_role.node.arn}"
+}
+
 resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = "${aws_iam_role.node.name}"

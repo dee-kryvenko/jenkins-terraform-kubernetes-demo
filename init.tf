@@ -2,6 +2,14 @@ locals {
   name = "jenkins-terraform-kubernetes-demo"
 }
 
+provider "local" {
+  version = "= 1.1"
+}
+
+provider "external" {
+  version = "= 1.0"
+}
+
 provider "aws" {
   version = "= 1.53.0"
   region  = "us-east-1"
@@ -57,11 +65,37 @@ module "k8s" {
   source = "./terraform/eks"
 
   providers {
-    "aws" = "aws"
+    "local"    = "local"
+    "external" = "external"
+    "aws"      = "aws"
   }
 
   name              = "${local.name}"
   vpc_id            = "${module.network.vpc_id}"
   allow_ip          = ["173.54.148.252/32"]
   cluster_subnet_id = ["${module.network.private_id}"]
+}
+
+output "cluster_dns" {
+  value = "${module.k8s.cluster_dns}"
+}
+
+provider "kubernetes" {
+  version                = "= 1.4"
+  host                   = "${module.k8s.cluster_dns}"
+  cluster_ca_certificate = "${module.k8s.cluster_ca}"
+  token                  = "${module.k8s.cluster_token}"
+  load_config_file       = false
+}
+
+module "k8s-addons" {
+  source = "./terraform/k8s-addons"
+
+  providers {
+    "aws"        = "aws"
+    "kubernetes" = "kubernetes"
+  }
+
+  name          = "${local.name}"
+  node_role_arn = "${module.k8s.node_role_arn}"
 }

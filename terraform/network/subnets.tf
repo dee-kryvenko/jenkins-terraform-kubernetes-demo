@@ -42,9 +42,7 @@ resource "aws_subnet" "private" {
   cidr_block              = "${cidrsubnet(local.private_cidr, "1", count.index)}"
   map_public_ip_on_launch = true
 
-  tags {
-    Name = "${var.name}-private"
-  }
+  tags = "${map("Name", "${var.name}-private", "kubernetes.io/cluster/${var.name}", "shared")}"
 }
 
 output "private_id" {

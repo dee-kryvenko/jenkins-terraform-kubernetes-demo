@@ -3,9 +3,7 @@ resource "aws_vpc" "this" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags {
-    Name = "${var.name}"
-  }
+  tags = "${map("Name", "${var.name}", "kubernetes.io/cluster/${var.name}", "shared")}"
 }
 
 output "vpc_id" {
