@@ -9,3 +9,5 @@ variable "allow_ip" {
 variable "cluster_subnet_id" {
   type = "list"
 }
+
+variable "kubeconfig" {}

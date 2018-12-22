@@ -28,10 +28,24 @@ KUBECONFIG
 }
 
 resource "local_file" "kubeconfig" {
+  filename = "${var.kubeconfig}"
   content  = "${local.kubeconfig}"
-  filename = "${path.module}/.kube/config"
 }
 
 output "kubeconfig" {
   value = "${local_file.kubeconfig.filename}"
+}
+
+output "cluster_ca" {
+  value = "${base64decode(aws_eks_cluster.this.certificate_authority.0.data)}"
+}
+
+data "external" "aws_iam_authenticator" {
+  depends_on = ["local_file.kubeconfig"]
+
+  program = ["sh", "-c", "aws-iam-authenticator token -i ${var.name} | jq -r -c .status"]
+}
+
+output "cluster_token" {
+  value = "${data.external.aws_iam_authenticator.result["token"]}"
 }

@@ -8,8 +8,6 @@ data "aws_ami" "eks-node" {
   owners      = ["602401143452"] # Amazon EKS AMI Account ID
 }
 
-data "aws_region" "current" {}
-
 locals {
   node-userdata = <<USERDATA
 #!/bin/bash

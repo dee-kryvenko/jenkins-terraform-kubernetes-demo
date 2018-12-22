@@ -1,4 +1,4 @@
-resource "kubernetes_config_map" "example" {
+resource "kubernetes_config_map" "node_aws_auth" {
   metadata {
     name      = "aws-auth"
     namespace = "kube-system"

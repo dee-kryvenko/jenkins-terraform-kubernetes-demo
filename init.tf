@@ -1,9 +1,14 @@
 locals {
-  name = "jenkins-terraform-kubernetes-demo"
+  name       = "jenkins-terraform-kubernetes-demo"
+  kubeconfig = "${pathexpand("${path.module}/.kube/config")}"
 }
 
 provider "local" {
   version = "= 1.1"
+}
+
+provider "random" {
+  version = "= 2.0.0"
 }
 
 provider "external" {
@@ -74,6 +79,7 @@ module "k8s" {
   vpc_id            = "${module.network.vpc_id}"
   allow_ip          = ["173.54.148.252/32"]
   cluster_subnet_id = ["${module.network.private_id}"]
+  kubeconfig        = "${local.kubeconfig}"
 }
 
 output "cluster_dns" {
@@ -85,7 +91,18 @@ provider "kubernetes" {
   host                   = "${module.k8s.cluster_dns}"
   cluster_ca_certificate = "${module.k8s.cluster_ca}"
   token                  = "${module.k8s.cluster_token}"
-  load_config_file       = false
+}
+
+provider "helm" {
+  version         = "= 0.7.0"
+  install_tiller  = "true"
+  service_account = "tiller"
+
+  kubernetes {
+    host                   = "${module.k8s.cluster_dns}"
+    cluster_ca_certificate = "${module.k8s.cluster_ca}"
+    token                  = "${module.k8s.cluster_token}"
+  }
 }
 
 module "k8s-addons" {
@@ -94,8 +111,29 @@ module "k8s-addons" {
   providers {
     "aws"        = "aws"
     "kubernetes" = "kubernetes"
+    "helm"       = "helm"
   }
 
-  name          = "${local.name}"
-  node_role_arn = "${module.k8s.node_role_arn}"
+  name                  = "${local.name}"
+  node_role_arn         = "${module.k8s.node_role_arn}"
+  nginx_ingress_version = "1.1.1"
+}
+
+output "ingress_lb" {
+  value = "${module.k8s-addons.ingress_lb}"
+}
+
+module "jenkins" {
+  source = "./terraform/jenkins"
+
+  providers {
+    "aws"        = "aws"
+    "kubernetes" = "kubernetes"
+    "helm"       = "helm"
+  }
+
+  name            = "${local.name}"
+  chart_version   = "0.26.0"
+  jenkins_version = "2.150.1"
+  ingress_lb      = "${module.k8s-addons.ingress_lb}"
 }
