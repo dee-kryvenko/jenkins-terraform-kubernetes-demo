@@ -30,9 +30,9 @@ resource "aws_launch_configuration" "node" {
 }
 
 resource "aws_autoscaling_group" "node" {
-  desired_capacity     = 1
+  desired_capacity     = 2
   launch_configuration = "${aws_launch_configuration.node.id}"
-  max_size             = 1
+  max_size             = 3
   min_size             = 1
   name                 = "${var.name}"
   vpc_zone_identifier  = ["${var.cluster_subnet_id}"]
