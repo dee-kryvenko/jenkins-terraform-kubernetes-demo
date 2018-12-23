@@ -15,6 +15,10 @@ provider "random" {
   version = "= 2.0.0"
 }
 
+provider "template" {
+  version = "= 1.0.0"
+}
+
 provider "external" {
   version = "= 1.0.0"
 }
@@ -126,11 +130,14 @@ output "ingress_lb" {
   value = "${module.k8s-addons.ingress_lb}"
 }
 
+variable "github_token" {}
+
 module "jenkins" {
   source = "./terraform/jenkins"
 
   providers {
     "null"       = "null"
+    "template"   = "template"
     "aws"        = "aws"
     "kubernetes" = "kubernetes"
     "helm"       = "helm"
@@ -141,4 +148,5 @@ module "jenkins" {
   chart_version        = "0.26.0"
   jenkins_version      = "2.150.1"
   ingress_lb           = "${module.k8s-addons.ingress_lb}"
+  github_token         = "${var.github_token}"
 }
