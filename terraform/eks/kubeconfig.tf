@@ -41,7 +41,7 @@ output "cluster_ca" {
 }
 
 data "external" "aws_iam_authenticator" {
-  depends_on = ["local_file.kubeconfig"]
+  depends_on = ["aws_eks_cluster.this"]
 
   program = ["sh", "-c", "aws-iam-authenticator token -i ${var.name} | jq -r -c .status"]
 }

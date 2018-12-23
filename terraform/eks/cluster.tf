@@ -16,3 +16,7 @@ resource "aws_eks_cluster" "this" {
 output "cluster_dns" {
   value = "${aws_eks_cluster.this.endpoint}"
 }
+
+output "cluster_dependency_id" {
+  value = "${md5(join(";", list(aws_eks_cluster.this.endpoint, null_resource.node.id, local_file.kubeconfig.filename, data.external.aws_iam_authenticator.result["token"])))}"
+}

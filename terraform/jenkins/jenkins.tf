@@ -8,9 +8,29 @@ locals {
     "github-organization-folder:1.6",
     "kubernetes-pipeline-steps:1.5",
   ]
+
+  values = <<VALUES
+Master:
+  ImageTag: "${var.jenkins_version}-alpine"
+  AdminPassword: "${random_string.password.result}"
+  ServiceType: ClusterIP
+  HostName: "${var.ingress_lb}"
+  Ingress:
+    Path: "/"
+  InstallPlugins: ["${join("\",\"", local.jenkins_plugins)}"]
+rbac:
+  install: true
+VALUES
+}
+
+resource "null_resource" "tiller" {
+  provisioner "local-exec" {
+    command = "echo ${var.tiller_dependency_id}"
+  }
 }
 
 resource "helm_release" "jenkins" {
+  depends_on    = ["null_resource.tiller"]
   name          = "jenkins"
   repository    = "stable"
   chart         = "jenkins"
@@ -19,41 +39,7 @@ resource "helm_release" "jenkins" {
   force_update  = "true"
   recreate_pods = "true"
   reuse         = "false"
-
-  set {
-    name  = "Master.ImageTag"
-    value = "${var.jenkins_version}-alpine"
-  }
-
-  set {
-    name  = "Master.AdminPassword"
-    value = "${random_string.password.result}"
-  }
-
-  set {
-    name  = "Master.ServiceType"
-    value = "ClusterIP"
-  }
-
-  set {
-    name  = "Master.HostName"
-    value = "${var.ingress_lb}"
-  }
-
-  set {
-    name  = "Master.Ingress.Path"
-    value = "/"
-  }
-
-  set {
-    name  = "rbac.install"
-    value = "true"
-  }
-
-  set {
-    name  = "Master.InstallPlugins"
-    value = "{${join(",", local.jenkins_plugins)}}"
-  }
+  values        = ["${list(local.values)}"]
 
   # set {
   #   name = "Master.Jobs."

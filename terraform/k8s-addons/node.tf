@@ -1,4 +1,6 @@
 resource "kubernetes_config_map" "node_aws_auth" {
+  depends_on = ["null_resource.cluster"]
+
   metadata {
     name      = "aws-auth"
     namespace = "kube-system"

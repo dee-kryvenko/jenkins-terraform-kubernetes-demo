@@ -3,8 +3,12 @@ locals {
   kubeconfig = "${pathexpand("${path.module}/.kube/config")}"
 }
 
+provider "null" {
+  version = "= 1.0.0"
+}
+
 provider "local" {
-  version = "= 1.1"
+  version = "= 1.1.0"
 }
 
 provider "random" {
@@ -12,7 +16,7 @@ provider "random" {
 }
 
 provider "external" {
-  version = "= 1.0"
+  version = "= 1.0.0"
 }
 
 provider "aws" {
@@ -21,13 +25,10 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${local.name}"
-  acl    = "private"
-  region = "us-east-1"
-
-  versioning {
-    enabled = true
-  }
+  bucket        = "${local.name}"
+  acl           = "private"
+  region        = "us-east-1"
+  force_destroy = "true"
 }
 
 resource "aws_dynamodb_table" "state_dynamodb_table_admin" {
@@ -87,7 +88,7 @@ output "cluster_dns" {
 }
 
 provider "kubernetes" {
-  version                = "= 1.4"
+  version                = "= 1.4.0"
   host                   = "${module.k8s.cluster_dns}"
   cluster_ca_certificate = "${module.k8s.cluster_ca}"
   token                  = "${module.k8s.cluster_token}"
@@ -109,12 +110,14 @@ module "k8s-addons" {
   source = "./terraform/k8s-addons"
 
   providers {
+    "null"       = "null"
     "aws"        = "aws"
     "kubernetes" = "kubernetes"
     "helm"       = "helm"
   }
 
   name                  = "${local.name}"
+  cluster_dependency_id = "${module.k8s.cluster_dependency_id}"
   node_role_arn         = "${module.k8s.node_role_arn}"
   nginx_ingress_version = "1.1.1"
 }
@@ -127,13 +130,15 @@ module "jenkins" {
   source = "./terraform/jenkins"
 
   providers {
+    "null"       = "null"
     "aws"        = "aws"
     "kubernetes" = "kubernetes"
     "helm"       = "helm"
   }
 
-  name            = "${local.name}"
-  chart_version   = "0.26.0"
-  jenkins_version = "2.150.1"
-  ingress_lb      = "${module.k8s-addons.ingress_lb}"
+  name                 = "${local.name}"
+  tiller_dependency_id = "${module.k8s-addons.tiller_dependency_id}"
+  chart_version        = "0.26.0"
+  jenkins_version      = "2.150.1"
+  ingress_lb           = "${module.k8s-addons.ingress_lb}"
 }

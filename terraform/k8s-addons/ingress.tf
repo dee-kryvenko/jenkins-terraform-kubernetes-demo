@@ -1,4 +1,6 @@
 resource "helm_release" "ingress" {
+  depends_on = ["null_resource.tiller"]
+
   name          = "ingress"
   repository    = "stable"
   chart         = "nginx-ingress"

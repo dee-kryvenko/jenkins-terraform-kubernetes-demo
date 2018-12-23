@@ -4,7 +4,7 @@ resource "random_string" "password" {
 }
 
 resource "aws_secretsmanager_secret" "password" {
-  name = "${var.name}-jenkins-password"
+  name_prefix = "${var.name}-jenkins-password"
 }
 
 resource "aws_secretsmanager_secret_version" "password" {

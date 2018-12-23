@@ -4,11 +4,15 @@ locals {
   dmz_cidr     = "${cidrsubnet(var.cidr, "2", "2")}"
 }
 
+data "aws_availability_zones" "azs" {}
+
 # Backend subnet is for DB
 resource "aws_subnet" "backend" {
-  count                   = "${var.azs}"
-  vpc_id                  = "${aws_vpc.this.id}"
-  cidr_block              = "${cidrsubnet(local.backend_cidr, "1", count.index)}"
+  count             = "${var.azs}"
+  vpc_id            = "${aws_vpc.this.id}"
+  availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
+  cidr_block        = "${cidrsubnet(local.backend_cidr, "1", count.index)}"
+
   map_public_ip_on_launch = false
 
   tags {
@@ -39,6 +43,7 @@ resource "aws_route_table_association" "backend" {
 resource "aws_subnet" "private" {
   count                   = "${var.azs}"
   vpc_id                  = "${aws_vpc.this.id}"
+  availability_zone       = "${data.aws_availability_zones.azs.names[count.index]}"
   cidr_block              = "${cidrsubnet(local.private_cidr, "1", count.index)}"
   map_public_ip_on_launch = true
 
@@ -78,6 +83,7 @@ resource "aws_route" "private_internet_gateway_route" {
 resource "aws_subnet" "dmz" {
   count                   = "${var.azs}"
   vpc_id                  = "${aws_vpc.this.id}"
+  availability_zone       = "${data.aws_availability_zones.azs.names[count.index]}"
   cidr_block              = "${cidrsubnet(local.dmz_cidr, "1", count.index)}"
   map_public_ip_on_launch = true
 
