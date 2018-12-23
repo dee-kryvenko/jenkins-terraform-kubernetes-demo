@@ -14,7 +14,6 @@ locals {
     "credentials-binding:1.17",
     "git:3.9.1",
     "github-organization-folder:1.6",
-    "kubernetes-pipeline-steps:1.5",
   ]
 
   credentials = <<CREDENTIALS
