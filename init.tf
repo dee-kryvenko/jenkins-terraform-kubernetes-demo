@@ -150,3 +150,7 @@ module "jenkins" {
   ingress_lb           = "${module.k8s-addons.ingress_lb}"
   github_token         = "${var.github_token}"
 }
+
+output "ecr_url" {
+  value = "${module.jenkins.ecr_url}"
+}

@@ -53,14 +53,43 @@ resource "null_resource" "tiller" {
   }
 }
 
-resource "helm_release" "jenkins" {
+resource "kubernetes_namespace" "jenkins" {
   depends_on = ["null_resource.tiller"]
+
+  metadata {
+    name = "jenkins"
+  }
+}
+
+resource "kubernetes_cluster_role_binding" "jenkins" {
+  depends_on = ["kubernetes_namespace.jenkins"]
+
+  metadata {
+    name = "jenkins"
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "cluster-admin"
+  }
+
+  subject {
+    api_group = ""
+    kind      = "ServiceAccount"
+    name      = "default"
+    namespace = "jenkins"
+  }
+}
+
+resource "helm_release" "jenkins" {
+  depends_on = ["kubernetes_namespace.jenkins"]
 
   name          = "jenkins"
   repository    = "stable"
   chart         = "jenkins"
   version       = "${var.chart_version}"
-  namespace     = "default"
+  namespace     = "jenkins"
   force_update  = "true"
   recreate_pods = "true"
   reuse         = "false"
