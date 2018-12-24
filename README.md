@@ -74,7 +74,6 @@ This is not a production ready solution. The sole purpose of this is to demonstr
     ```
     terraform destroy
     ```
-1. Note that since images in ECR were not managed by terraform and I'm too lazy to put together a workaround for it - previous step would fail till you manually clean up all images under given ECR repository.
 
 # Dive into the code
 
