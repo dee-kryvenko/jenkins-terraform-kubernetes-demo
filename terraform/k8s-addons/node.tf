@@ -1,3 +1,4 @@
+# This config map are essential to allow ASG instances to join the cluster
 resource "kubernetes_config_map" "node_aws_auth" {
   depends_on = ["null_resource.cluster"]
 

@@ -3,6 +3,7 @@ resource "aws_vpc" "this" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
+  # Kubernetes will create this tag anyway but it'll drive terraform crazy so we'd better pre-create it
   tags = "${map("Name", "${var.name}", "kubernetes.io/cluster/${var.name}", "shared")}"
 }
 

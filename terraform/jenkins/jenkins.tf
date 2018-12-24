@@ -1,3 +1,4 @@
+# Sample demo github job XML
 data "template_file" "llibicpep_job" {
   template = "${file("${path.module}/templates/github_org_job.xml.tpl")}"
 
@@ -16,6 +17,8 @@ locals {
     "github-organization-folder:1.6",
   ]
 
+  # This snippet will add GitHub token to the Jenkins
+  # Without a token there's GitHub API rate limit that will make you wait for ages till the first build even possible
   credentials = <<CREDENTIALS
       import jenkins.model.Jenkins
       import com.cloudbees.plugins.credentials.impl.*
@@ -60,6 +63,7 @@ resource "kubernetes_namespace" "jenkins" {
   }
 }
 
+# This will allow god mode inside the cluster for Jenkins - not secure but good enough for a demo
 resource "kubernetes_cluster_role_binding" "jenkins" {
   depends_on = ["kubernetes_namespace.jenkins"]
 

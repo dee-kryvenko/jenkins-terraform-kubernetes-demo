@@ -1,3 +1,7 @@
+# Standard 3-tier model imply:
+#  1. a backend network (for DB and such)
+#  2. a private network for most of the stuff that is the only ingress source allowed in backend
+#  3. a dmz network for LBs and such
 locals {
   backend_cidr = "${cidrsubnet(var.cidr, "2", "0")}"
   private_cidr = "${cidrsubnet(var.cidr, "2", "1")}"

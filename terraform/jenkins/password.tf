@@ -1,3 +1,6 @@
+# We generate random password for jenkins admin user here.
+# Now, it's not secure to output the password in plain text to stdout,
+# So we save it to AWS Secrets Manager
 resource "random_string" "password" {
   length  = 16
   special = false

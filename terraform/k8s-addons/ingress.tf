@@ -21,6 +21,8 @@ resource "helm_release" "ingress" {
   }
 }
 
+# Since helm_release does not provides too much output,
+# we use kubernetes_service data source to find out LB dns
 data "kubernetes_service" "ingress" {
   depends_on = ["helm_release.ingress"]
 

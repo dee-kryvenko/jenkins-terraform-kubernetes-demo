@@ -40,6 +40,7 @@ output "cluster_ca" {
   value = "${base64decode(aws_eks_cluster.this.certificate_authority.0.data)}"
 }
 
+# This is an EKS thing that supplies us with a token to interact with the cluster
 data "external" "aws_iam_authenticator" {
   depends_on = ["aws_eks_cluster.this"]
 

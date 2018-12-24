@@ -28,6 +28,10 @@ resource "kubernetes_cluster_role_binding" "tiller" {
   }
 }
 
+# k8s is a lot about "eventually consistency" and async
+# That has it's pros - once tiller is allegedly deployed - it's not actually immediately available to use
+# Hence we're not leaving tiller installation for the provider - we install it ourselves
+# and then use 'helm ls' in a loop to wait till it's available
 resource "null_resource" "tiller" {
   depends_on = ["kubernetes_cluster_role_binding.tiller"]
 

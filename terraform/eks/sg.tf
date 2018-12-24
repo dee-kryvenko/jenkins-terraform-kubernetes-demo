@@ -49,6 +49,7 @@ resource "aws_security_group" "node" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Tags are essential for k8s to discover this security group
   tags = "${
     map(
      "Name", "${var.name}-node",

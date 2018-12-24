@@ -1,8 +1,13 @@
 locals {
-  name       = "jenkins-terraform-kubernetes-demo"
+  # This is use as ID or prefix for resources
+  name = "jenkins-terraform-kubernetes-demo"
+
+  # This is where local kube config is saved
   kubeconfig = "${pathexpand("${path.module}/.kube/config")}"
 }
 
+# There is a whole bunch of providers configured below
+# Mainly we just pin the versions to get the whole thing reproducible
 provider "null" {
   version = "= 1.0.0"
 }
@@ -28,6 +33,8 @@ provider "aws" {
   region  = "us-east-1"
 }
 
+# Bucket and DynamoDB below is for TF state file itself
+# If you want to use it - uncomment s3 backend session below
 resource "aws_s3_bucket" "state_bucket" {
   bucket        = "${local.name}"
   acl           = "private"
@@ -50,7 +57,7 @@ resource "aws_dynamodb_table" "state_dynamodb_table_admin" {
 terraform {
   backend "local" {}
 
-  # Will only work when the bucket already exist
+  # Will only work when the buckets already exist
   # backend "s3" {
   #   bucket         = "jenkins-terraform-kubernetes-demo"
   #   key            = "state"
@@ -60,6 +67,7 @@ terraform {
   # }
 }
 
+# This module will create 3 tier network
 module "network" {
   source = "./terraform/network"
 
@@ -71,8 +79,11 @@ module "network" {
   cidr = "10.0.0.0/16"
 }
 
-variable "allow_ip_cidr" {}
+variable "allow_ip_cidr" {
+  description = "Give a CIDR to be whitelisted for k8s API and Ingress"
+}
 
+# This module will create EKS cluster
 module "k8s" {
   source = "./terraform/eks"
 
@@ -93,6 +104,9 @@ output "cluster_dns" {
   value = "${module.k8s.cluster_dns}"
 }
 
+# Now it's time to configure k8s/helm providers
+# Luckily these two supports interpolation
+# Using previous modules output here will create implicit dependency
 provider "kubernetes" {
   version                = "= 1.4.0"
   host                   = "${module.k8s.cluster_dns}"
@@ -112,6 +126,7 @@ provider "helm" {
   }
 }
 
+# When cluster is ready - it's time for some addons
 module "k8s-addons" {
   source = "./terraform/k8s-addons"
 
@@ -122,8 +137,14 @@ module "k8s-addons" {
     "helm"       = "helm"
   }
 
-  name                        = "${local.name}"
-  cluster_dependency_id       = "${module.k8s.cluster_dependency_id}"
+  name = "${local.name}"
+
+  # TF in current version poorly handles some edge cases with regards to dependencies
+  # What is done here - an md5 string based on the output of several resources
+  # That will be used for null_resource that then will be used as depends_on to glue the sequence together
+  # That will make sure we start deploying addons only when the cluster is ready
+  cluster_dependency_id = "${module.k8s.cluster_dependency_id}"
+
   node_role_arn               = "${module.k8s.node_role_arn}"
   nginx_ingress_chart_version = "1.1.1"
   nginx_ingress_version       = "0.21.0"
@@ -135,6 +156,7 @@ output "ingress_lb" {
 
 variable "github_token" {}
 
+# So now that the cluster is fully functional - it's time to deploy jenkins
 module "jenkins" {
   source = "./terraform/jenkins"
 
@@ -146,12 +168,15 @@ module "jenkins" {
     "helm"       = "helm"
   }
 
-  name                 = "${local.name}"
+  name = "${local.name}"
+
+  # Same trick with md5, null_resource and depends_on as above but for tiller
   tiller_dependency_id = "${module.k8s-addons.tiller_dependency_id}"
-  chart_version        = "0.26.0"
-  jenkins_version      = "2.150.1"
-  ingress_lb           = "${module.k8s-addons.ingress_lb}"
-  github_token         = "${var.github_token}"
+
+  chart_version   = "0.26.0"
+  jenkins_version = "2.150.1"
+  ingress_lb      = "${module.k8s-addons.ingress_lb}"
+  github_token    = "${var.github_token}"
 }
 
 output "ecr_url" {
