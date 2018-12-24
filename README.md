@@ -1,6 +1,6 @@
 # What is this?
 
-This is completely self-contained and fully automated I/CaaC demo in AWS.
+This is a completely self-contained and fully automated I/CaaC demo in AWS.
 
 This repository contains a number of terraform modules that will:
 
@@ -14,13 +14,16 @@ Jenkins will be automatically configured to track https://github.com/llibicpep a
 
 Repositories with the name matching `jenkins-terraform-kubernetes-demo*` and having a `Jenkinsfile` will be automatically served by this instance of Jenkins.
 
-There is a demo app repository https://github.com/llibicpep/jenkins-terraform-kubernetes-demo-app already setup. This repository contains a hello world Spring Boot app, a Dockerfile to build an image with it, a helm chart to deploy it to kubernetes, and also a Jenkinsfile to orchestrate the pipeline for all of it. Only master branch get deployed, rest of the branches and PRs just run through tests.
+There is a demo app repository https://github.com/llibicpep/jenkins-terraform-kubernetes-demo-app.
+
+This repository contains a hello world Spring Boot app, a Dockerfile to build an image with it, a helm chart to deploy it to kubernetes, and also a Jenkinsfile to orchestrate the pipeline for all of it. Only master branch get deployed, rest of the branches and PRs just run through tests.
 
 # Assumptions
 
 This is not a production ready solution. The sole purpose of this is to demonstrate some of capabilities in terraform+jenkins+kubernetes+helm combination. There would be a number of TODOs to make this production grade:
 
 1. Some VPN service required to dial into the private network
+1. NACLs needs some work
 1. Currently only 1 of 3 network tiers is used, kubernetes ingress controller LB needs to be moved to DMZ network
 1. Single repo is not a best choise, better to split it up to tiers such as: network, kubernetes cluster, k8s addons, jenkins and apps. Each tier would be managed separately.
 1. IAM stuff needs much more thoroughly revisited, it has too widely open permissions right now.
@@ -33,6 +36,7 @@ This is not a production ready solution. The sole purpose of this is to demonstr
 # Prerequisites
 
 1. AWS account
+1. AWS CLI
 1. GitHub account
 1. Docker
 
@@ -70,4 +74,4 @@ This is not a production ready solution. The sole purpose of this is to demonstr
     ```
     terraform destroy
     ```
-1. Note that since images in ECR were not managed by terraform and I'm too lazy put together a workaround for it - previous step would fail till you manually clean up all images under given ECR repository.
+1. Note that since images in ECR were not managed by terraform and I'm too lazy to put together a workaround for it - previous step would fail till you manually clean up all images under given ECR repository.
