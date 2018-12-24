@@ -71,6 +71,8 @@ module "network" {
   cidr = "10.0.0.0/16"
 }
 
+variable "allow_ip_cidr" {}
+
 module "k8s" {
   source = "./terraform/eks"
 
@@ -82,7 +84,7 @@ module "k8s" {
 
   name              = "${local.name}"
   vpc_id            = "${module.network.vpc_id}"
-  allow_ip          = ["173.54.148.252/32"]
+  allow_ip          = ["${var.allow_ip_cidr}"]
   cluster_subnet_id = ["${module.network.private_id}"]
   kubeconfig        = "${local.kubeconfig}"
 }
