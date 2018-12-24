@@ -120,10 +120,11 @@ module "k8s-addons" {
     "helm"       = "helm"
   }
 
-  name                  = "${local.name}"
-  cluster_dependency_id = "${module.k8s.cluster_dependency_id}"
-  node_role_arn         = "${module.k8s.node_role_arn}"
-  nginx_ingress_version = "1.1.1"
+  name                        = "${local.name}"
+  cluster_dependency_id       = "${module.k8s.cluster_dependency_id}"
+  node_role_arn               = "${module.k8s.node_role_arn}"
+  nginx_ingress_chart_version = "1.1.1"
+  nginx_ingress_version       = "0.21.0"
 }
 
 output "ingress_lb" {

@@ -4,11 +4,16 @@ resource "helm_release" "ingress" {
   name          = "ingress"
   repository    = "stable"
   chart         = "nginx-ingress"
-  version       = "${var.nginx_ingress_version}"
+  version       = "${var.nginx_ingress_chart_version}"
   namespace     = "default"
   force_update  = "true"
   recreate_pods = "true"
   reuse         = "false"
+
+  set {
+    name  = "controller.image.tag"
+    value = "${var.nginx_ingress_version}"
+  }
 
   set {
     name  = "controller.publishService.enabled"
@@ -25,6 +30,10 @@ data "kubernetes_service" "ingress" {
   }
 }
 
+locals {
+  ingress_lb = "${lookup(data.kubernetes_service.ingress.load_balancer_ingress[0], "hostname")}"
+}
+
 output "ingress_lb" {
-  value = "${lookup(data.kubernetes_service.ingress.load_balancer_ingress[0], "hostname")}"
+  value = "${local.ingress_lb}"
 }
