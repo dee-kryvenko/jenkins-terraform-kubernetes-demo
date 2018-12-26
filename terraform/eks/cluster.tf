@@ -8,6 +8,7 @@ resource "aws_eks_cluster" "this" {
   }
 
   depends_on = [
+    "aws_iam_role.master",
     "aws_iam_role_policy_attachment.AmazonEKSClusterPolicy",
     "aws_iam_role_policy_attachment.AmazonEKSServicePolicy",
   ]

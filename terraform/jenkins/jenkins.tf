@@ -55,17 +55,9 @@ resource "null_resource" "tiller" {
   }
 }
 
-resource "kubernetes_namespace" "jenkins" {
-  depends_on = ["null_resource.tiller"]
-
-  metadata {
-    name = "jenkins"
-  }
-}
-
 # This will allow god mode inside the cluster for Jenkins - not secure but good enough for a demo
 resource "kubernetes_cluster_role_binding" "jenkins" {
-  depends_on = ["kubernetes_namespace.jenkins"]
+  depends_on = ["null_resource.tiller"]
 
   metadata {
     name = "jenkins"
@@ -81,18 +73,18 @@ resource "kubernetes_cluster_role_binding" "jenkins" {
     api_group = ""
     kind      = "ServiceAccount"
     name      = "default"
-    namespace = "jenkins"
+    namespace = "default"
   }
 }
 
 resource "helm_release" "jenkins" {
-  depends_on = ["kubernetes_namespace.jenkins"]
+  depends_on = ["null_resource.tiller"]
 
   name          = "jenkins"
   repository    = "stable"
   chart         = "jenkins"
   version       = "${var.chart_version}"
-  namespace     = "jenkins"
+  namespace     = "default"
   force_update  = "true"
   recreate_pods = "true"
   reuse         = "false"
