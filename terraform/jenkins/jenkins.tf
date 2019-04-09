@@ -9,11 +9,9 @@ data "template_file" "llibicpep_job" {
 
 locals {
   jenkins_plugins = [
-    "kubernetes:1.14.0",
-    "workflow-job:2.31",
+    "kubernetes:1.14.9",
     "workflow-aggregator:2.6",
-    "credentials-binding:1.17",
-    "git:3.9.1",
+    "credentials-binding:1.18",
     "github-organization-folder:1.6",
   ]
 
@@ -35,8 +33,11 @@ Master:
   AdminPassword: "${random_string.password.result}"
   ServiceType: ClusterIP
   HostName: "${var.ingress_lb}"
+  JenkinsUriPrefix: /jenkins
   Ingress:
-    Path: "/"
+    Annotations:
+      kubernetes.io/ingress.class: nginx
+    Path: "/jenkins"
   InstallPlugins: ["${join("\",\"", local.jenkins_plugins)}"]
   InitScripts:
     00credentials: |-

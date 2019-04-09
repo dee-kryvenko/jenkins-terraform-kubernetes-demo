@@ -8,6 +8,18 @@ locals {
   dmz_cidr     = "${cidrsubnet(var.cidr, "2", "2")}"
 }
 
+output "backend_cidr" {
+  value = "${local.backend_cidr}"
+}
+
+output "private_cidr" {
+  value = "${local.private_cidr}"
+}
+
+output "dmz_cidr" {
+  value = "${local.dmz_cidr}"
+}
+
 data "aws_availability_zones" "azs" {}
 
 # Backend subnet is for DB
@@ -15,7 +27,7 @@ resource "aws_subnet" "backend" {
   count             = "${var.azs}"
   vpc_id            = "${aws_vpc.this.id}"
   availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
-  cidr_block        = "${cidrsubnet(local.backend_cidr, "1", count.index)}"
+  cidr_block        = "${cidrsubnet(local.backend_cidr, "${var.azs - 1}", count.index)}"
 
   map_public_ip_on_launch = false
 
@@ -24,8 +36,8 @@ resource "aws_subnet" "backend" {
   }
 }
 
-output "backend_id" {
-  value = ["${aws_subnet.backend.*.id}"]
+output "backend_subnets" {
+  value = "${zipmap(aws_subnet.backend.*.id, aws_subnet.backend.*.cidr_block)}"
 }
 
 resource "aws_route_table" "backend" {
@@ -48,14 +60,14 @@ resource "aws_subnet" "private" {
   count                   = "${var.azs}"
   vpc_id                  = "${aws_vpc.this.id}"
   availability_zone       = "${data.aws_availability_zones.azs.names[count.index]}"
-  cidr_block              = "${cidrsubnet(local.private_cidr, "1", count.index)}"
+  cidr_block              = "${cidrsubnet(local.private_cidr, "${var.azs - 1}", count.index)}"
   map_public_ip_on_launch = true
 
   tags = "${map("Name", "${var.name}-private", "kubernetes.io/cluster/${var.name}", "shared")}"
 }
 
-output "private_id" {
-  value = ["${aws_subnet.private.*.id}"]
+output "private_subnets" {
+  value = "${zipmap(aws_subnet.private.*.id, aws_subnet.private.*.cidr_block)}"
 }
 
 resource "aws_route_table" "private" {
@@ -88,16 +100,14 @@ resource "aws_subnet" "dmz" {
   count                   = "${var.azs}"
   vpc_id                  = "${aws_vpc.this.id}"
   availability_zone       = "${data.aws_availability_zones.azs.names[count.index]}"
-  cidr_block              = "${cidrsubnet(local.dmz_cidr, "1", count.index)}"
+  cidr_block              = "${cidrsubnet(local.dmz_cidr, "${var.azs - 1}", count.index)}"
   map_public_ip_on_launch = true
 
-  tags {
-    Name = "${var.name}-dmz"
-  }
+  tags = "${map("Name", "${var.name}-dmz", "kubernetes.io/role/internal-elb", "1", "kubernetes.io/role/elb", "1")}"
 }
 
-output "dmz_id" {
-  value = ["${aws_subnet.dmz.*.id}"]
+output "dmz_subnets" {
+  value = "${zipmap(aws_subnet.dmz.*.id, aws_subnet.dmz.*.cidr_block)}"
 }
 
 resource "aws_route_table" "dmz" {

@@ -36,11 +36,11 @@ resource "null_resource" "tiller" {
   depends_on = ["kubernetes_cluster_role_binding.tiller"]
 
   provisioner "local-exec" {
-    command = "helm init --upgrade --force-upgrade --service-account tiller && parallel --retries 60 --delay 5 ::: 'helm ls'"
+    command = "export KUBECONFIG='${var.kubeconfig}' && helm init --upgrade --force-upgrade --service-account tiller && parallel --retries 60 --delay 5 ::: 'helm ls'"
   }
 
   provisioner "local-exec" {
-    command = "helm reset --force"
+    command = "export KUBECONFIG='${var.kubeconfig}' && helm reset --force"
     when    = "destroy"
   }
 }

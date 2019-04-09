@@ -1,5 +1,5 @@
 locals {
-  # This is use as ID or prefix for resources
+  # This is used as ID or prefix for resources
   name = "jenkins-terraform-kubernetes-demo"
 
   # This is where local kube config is saved
@@ -34,25 +34,24 @@ provider "aws" {
 }
 
 # Bucket and DynamoDB below is for TF state file itself
-# If you want to use it - uncomment s3 backend session below
-resource "aws_s3_bucket" "state_bucket" {
-  bucket        = "${local.name}"
-  acl           = "private"
-  region        = "us-east-1"
-  force_destroy = "true"
-}
+# If you want to use it - uncomment it and s3 backend configuration below
+# resource "aws_s3_bucket" "state_bucket" {
+#   bucket        = "${local.name}"
+#   acl           = "private"
+#   region        = "us-east-1"
+#   force_destroy = "true"
+# }
 
-resource "aws_dynamodb_table" "state_dynamodb_table_admin" {
-  name           = "${local.name}"
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-}
+# resource "aws_dynamodb_table" "state_dynamodb_table_admin" {
+#   name           = "${local.name}"
+#   read_capacity  = 1
+#   write_capacity = 1
+#   hash_key       = "LockID"
+#   attribute {
+#     name = "LockID"
+#     type = "S"
+#   }
+# }
 
 terraform {
   backend "local" {}
@@ -67,6 +66,10 @@ terraform {
   # }
 }
 
+variable "azs" {
+  description = "Number of availability zones to use"
+}
+
 # This module will create 3 tier network
 module "network" {
   source = "./terraform/network"
@@ -77,6 +80,19 @@ module "network" {
 
   name = "${local.name}"
   cidr = "10.0.0.0/16"
+  azs  = "${var.azs}"
+}
+
+output "backend_subnets" {
+  value = "${module.network.backend_subnets}"
+}
+
+output "private_subnets" {
+  value = "${module.network.private_subnets}"
+}
+
+output "dmz_subnets" {
+  value = "${module.network.dmz_subnets}"
 }
 
 variable "allow_ip_cidr" {
@@ -96,7 +112,7 @@ module "k8s" {
   name              = "${local.name}"
   vpc_id            = "${module.network.vpc_id}"
   allow_ip          = ["${var.allow_ip_cidr}"]
-  cluster_subnet_id = ["${module.network.private_id}"]
+  cluster_subnet_id = ["${keys(module.network.private_subnets)}"]
   kubeconfig        = "${local.kubeconfig}"
 }
 
@@ -137,7 +153,8 @@ module "k8s-addons" {
     "helm"       = "helm"
   }
 
-  name = "${local.name}"
+  name       = "${local.name}"
+  kubeconfig = "${local.kubeconfig}"
 
   # TF in current version poorly handles some edge cases with regards to dependencies
   # What is done here - an md5 string based on the output of several resources
@@ -152,6 +169,10 @@ module "k8s-addons" {
 
 output "ingress_lb" {
   value = "${module.k8s-addons.ingress_lb}"
+}
+
+output "ingress_internal_lb" {
+  value = "${module.k8s-addons.ingress_internal_lb}"
 }
 
 variable "github_token" {}

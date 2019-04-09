@@ -1,7 +1,7 @@
 data "aws_ami" "eks-node" {
   filter {
     name   = "name"
-    values = ["amazon-eks-node-v*"]
+    values = ["amazon-eks-node-${var.eks_version}-v*"]
   }
 
   most_recent = true
@@ -32,10 +32,10 @@ resource "aws_launch_configuration" "node" {
 # It won't really auto scale, ASG is used solely for resilincy and reproducibility.
 # In order to auto scale - there's auto scaler addon that takes over the control over that ASG
 resource "aws_autoscaling_group" "node" {
-  desired_capacity     = 2
+  desired_capacity     = "${length(var.cluster_subnet_id)}"
   launch_configuration = "${aws_launch_configuration.node.id}"
-  max_size             = 3
-  min_size             = 1
+  max_size             = 5
+  min_size             = "${length(var.cluster_subnet_id)}"
   name                 = "${var.name}"
   vpc_zone_identifier  = ["${var.cluster_subnet_id}"]
 

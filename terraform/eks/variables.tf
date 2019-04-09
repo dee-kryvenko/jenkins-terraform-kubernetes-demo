@@ -10,4 +10,8 @@ variable "cluster_subnet_id" {
   type = "list"
 }
 
+variable "eks_version" {
+  default = "1.12"
+}
+
 variable "kubeconfig" {}

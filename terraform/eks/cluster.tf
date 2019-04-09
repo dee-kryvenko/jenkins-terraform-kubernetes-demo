@@ -1,5 +1,6 @@
 resource "aws_eks_cluster" "this" {
   name     = "${var.name}"
+  version  = "${var.eks_version}"
   role_arn = "${aws_iam_role.master.arn}"
 
   vpc_config {

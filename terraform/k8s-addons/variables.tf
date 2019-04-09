@@ -1,4 +1,5 @@
 variable "name" {}
+variable "kubeconfig" {}
 
 variable "cluster_dependency_id" {}
 
