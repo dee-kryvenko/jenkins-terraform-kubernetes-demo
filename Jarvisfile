@@ -1,0 +1,9 @@
+jarvis {
+    version = "master"
+}
+
+artifact "docker" "app" {
+    dockerVersion = "19.03.4"
+}
+
+jarvis this
